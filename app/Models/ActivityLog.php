@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
 
 class ActivityLog extends Model
 {
@@ -40,7 +41,7 @@ class ActivityLog extends Model
         ?string $description = null
     ): self {
         return self::create([
-            'user_id' => auth()->id(),
+            'user_id' => Auth::id(),
             'action' => $action,
             'table_name' => $tableName,
             'record_id' => $recordId,
