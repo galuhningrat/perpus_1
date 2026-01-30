@@ -2,26 +2,33 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // 1. Buat User Admin agar bisa login
-        User::factory()->create([
-            'name' => 'Admin Perpustakaan',
-            'email' => 'admin@stti.com',
-            'nim_nidn' => '00000000', // Sesuai aturan unique & not null kamu
-            'role' => 'super_admin',
-            'password' => bcrypt('password'),
-        ]);
+        $this->command->info('🚀 Starting Database Seeding...');
+        $this->command->newLine();
 
-        // 2. Panggil Seeder lainnya
+        // Urutan penting: Categories dulu, baru Users & Books
         $this->call([
             CategorySeeder::class,
+            UserSeeder::class,
             BookSeeder::class,
         ]);
+
+        $this->command->newLine();
+        $this->command->info('✅ Database Seeding Completed!');
+        $this->command->info('📊 Login Credentials:');
+        $this->command->table(
+            ['Role', 'Email', 'Password'],
+            [
+                ['Super Admin', 'admin@stti.ac.id', 'admin123'],
+                ['Pustakawan', 'pustaka1@stti.ac.id', 'pustaka123'],
+                ['Mahasiswa (IF)', 'rizki.if23@student.stti.ac.id', 'mahasiswa123'],
+                ['Dosen', 'hendra.dosen@stti.ac.id', 'dosen123'],
+            ]
+        );
     }
 }
