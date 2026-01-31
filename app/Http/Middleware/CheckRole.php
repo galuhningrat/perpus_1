@@ -4,7 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth; // Tambahkan ini agar check() dan logout() tidak merah
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckRole
@@ -26,7 +26,7 @@ class CheckRole
 
         // Check if user is active
         if (!$user->is_active) {
-            Auth::logout(); // Sekarang logout() tidak akan merah lagi
+            Auth::logout();
             return redirect()->route('login')->with('error', 'Your account is inactive.');
         }
 

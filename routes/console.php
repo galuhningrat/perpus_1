@@ -1,69 +1,63 @@
 <?php
 
-namespace App\Console;
+use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
+Artisan::command('inspire', function () {
+    $this->comment(Inspiring::quote());
+})->purpose('Display an inspiring quote')->hourly();
 
-use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-use App\Console\Commands\CalculateOverdueFines;
-use App\Console\Commands\LibraryStats;
-use App\Console\Commands\RegenerateQRCodes;
+// Test commands
+Artisan::command('test:services', function () {
+    $this->info('Testing Library Services...');
 
-class Kernel extends ConsoleKernel
-{
-    /**
-     * The Artisan commands provided by your application.
-     *
-     * @var array
-     */
-    protected $commands = [
-        \App\Console\Commands\CalculateOverdueFines::class,
-        \App\Console\Commands\LibraryStats::class,
-        \App\Console\Commands\RegenerateQRCodes::class,
-    ];
+    // Test BookService
+    $this->info('📚 Testing BookService...');
+    $bookService = app(\App\Services\BookService::class);
+    $books = $bookService->getAvailableBooks();
+    $this->info("Available books: {$books->count()}");
 
-    /**
-     * Define the application's command schedule.
-     */
-    protected function schedule(Schedule $schedule): void
-    {
-        // Calculate overdue fines every day at 00:01 AM
-        $schedule->command('fines:calculate-overdue')
-            ->dailyAt('00:01')
-            ->withoutOverlapping()
-            ->appendOutputTo(storage_path('logs/scheduler.log'));
+    // Test BorrowingService
+    $this->info('📋 Testing BorrowingService...');
+    $borrowingService = app(\App\Services\BorrowingService::class);
+    $stats = $borrowingService->getOverdueStatistics();
+    $this->info("Overdue borrowings: {$stats['total_overdue']}");
 
-        // Update existing fines every 6 hours
-        $schedule->command('fines:calculate-overdue --update')
-            ->everySixHours()
-            ->withoutOverlapping()
-            ->appendOutputTo(storage_path('logs/scheduler.log'));
+    // Test FineCalculationService
+    $this->info('💰 Testing FineCalculationService...');
+    $fineService = app(\App\Services\FineCalculationService::class);
+    $fineStats = $fineService->getFineStatistics();
+    $this->info("Total fines: {$fineStats['total_fines']}");
 
-        // Mark expired bookings every hour
-        $schedule->call(function () {
-            app(\App\Services\BookingService::class)->markExpiredBookings();
-        })->hourly();
+    $this->info('✅ All services working!');
+})->purpose('Test all library services');
 
-        // Send reminder emails for books due tomorrow (if email feature implemented)
-        // $schedule->command('borrowings:send-reminders')
-        //     ->dailyAt('08:00')
-        //     ->appendOutputTo(storage_path('logs/scheduler.log'));
-
-        // Cleanup old logs (optional)
-        $schedule->command('telescope:prune --hours=48')
-            ->dailyAt('02:00')
-            ->when(function () {
-                return class_exists('Laravel\Telescope\Telescope');
-            });
+// Quick database reset for development
+Artisan::command('dev:reset', function () {
+    if (app()->environment('production')) {
+        $this->error('Cannot run this command in production!');
+        return;
     }
 
-    /**
-     * Register the commands for the application.
-     */
-    protected function commands(): void
-    {
-        $this->load(__DIR__ . '/Commands');
+    $this->warn('This will reset the entire database!');
 
-        require base_path('routes/console.php');
+    if (!$this->confirm('Do you wish to continue?')) {
+        return;
     }
-}
+
+    $this->info('Resetting database...');
+    $this->call('migrate:fresh', ['--seed' => true]);
+    $this->info('✅ Database reset complete!');
+
+    $this->newLine();
+    $this->info('Default credentials:');
+    $this->table(
+        ['Role', 'Email', 'Password'],
+        [
+            ['Super Admin', 'admin@stti.ac.id', 'admin123'],
+            ['Pustakawan', 'pustaka1@stti.ac.id', 'pustaka123'],
+            ['Mahasiswa', 'rizki.if23@student.stti.ac.id', 'mahasiswa123'],
+        ]
+    );
+})->purpose('Reset database with fresh seed (development only)');
